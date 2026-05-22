@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <script>
+    // Tự động xóa sạch cache Service Worker để phục vụ phát triển (development mode)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        for (let reg of regs) reg.unregister();
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => {
+        for (let key of keys) caches.delete(key);
+      });
+    }
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mochi Mood – Nhật ký cảm xúc của bạn ✨</title>
+  <meta name="sb-url" content="https://eyjvkVvaweslcsfrjgbm.supabase.co" />
+  <meta name="sb-key" content="sb_publishable_A7VDPI2kZVHI3D-C0dhsdA_kXlWSrO2" />
+  <meta name="description" content="Ứng dụng nhật ký cảm xúc dễ thương, chữa lành. Ghi lại từng khoảnh khắc cuộc sống với Mochi Mood." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Quicksand:wght@500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#b583f5" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
+<body>
+  <!-- Desktop wrapper -->
+  <div class="desktop-bg">
+    <div class="phone-frame">
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="status-time" id="statusTime">9:17</span>
+        <div class="status-icons">
+          <span>📶</span><span>🔋</span>
+        </div>
+      </div>
+
+      <!-- ===================== SCREENS ===================== -->
+      
+      <!-- SCREEN: AUTH -->
+      <div class="screen active" id="screen-auth">
+        <!-- Decorative Blobs -->
+        <div class="auth-blob blob-1"></div>
+        <div class="auth-blob blob-2"></div>
+
+        <div id="auth-header" class="auth-header-container">
+          <h1 class="auth-header-title" id="auth-title">Mừng bạn trở lại! 👋</h1>
+          <p class="auth-header-sub" id="auth-subtitle">✨ Ghi lại cảm xúc hôm nay để ngày mai thêm trọn vẹn.</p>
+        </div>
+
+        <div class="auth-tabs-container">
+          <button id="auth-tab-login" class="auth-tab-btn active" onclick="switchAuthTab('login')">Đăng nhập</button>
+          <button id="auth-tab-register" class="auth-tab-btn" onclick="switchAuthTab('register')">Đăng ký</button>
+        </div>
+
+        <div id="auth-form" class="auth-form-container">
+          <!-- Register Only: Username -->
+          <div id="auth-username-container" class="auth-field-container">
+            <input type="text" id="auth-username" class="auth-input" placeholder="Tên hiển thị (VD: Mochi)">
+          </div>
+
+          <div class="auth-input-group">
+            <input type="email" id="auth-email" class="auth-input" placeholder="Email của bạn">
+          </div>
+          
+          <div class="auth-input-group">
+            <div class="password-input-wrapper">
+              <input type="password" id="auth-password" class="auth-input" placeholder="Mật khẩu">
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('auth-password', this)">👁️</button>
+            </div>
+          </div>
+
+          <!-- Register Only: Confirm Password -->
+          <div id="auth-confirm-container" class="auth-field-container">
+            <div class="password-input-wrapper">
+              <input type="password" id="auth-confirm-password" class="auth-input" placeholder="Xác nhận mật khẩu">
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('auth-confirm-password', this)">👁️</button>
+            </div>
+          </div>
+
+          <!-- Login Only: Remember Me & Forgot Password -->
+          <div id="auth-login-extras" class="auth-remember-row">
+            <label class="auth-checkbox-group">
+              <input type="checkbox" id="auth-remember" checked>
+              <span class="auth-checkbox-label">Ghi nhớ tôi</span>
+            </label>
+            <a href="#" class="auth-forgot-link" onclick="showToast('💌 Tính năng sẽ sớm ra mắt!')">Quên mật khẩu?</a>
+          </div>
+
+          <button id="auth-submit-btn" class="auth-primary-btn" onclick="handleAuthSubmit()">Khám phá ngay ✨</button>
+        </div>
+
+
+
+        <p class="auth-security-notice">🔒 DỮ LIỆU CỦA BẠN ĐƯỢC BẢO MẬT TUYỆT ĐỐI</p>
+        
+        <p class="auth-footer-text">© 2026 Mochi Mood Studio</p>
+      </div>
+
+      <!-- SCREEN: HOME -->
+      <div class="screen" id="screen-home">
+        <!-- Clouds decoration -->
+        <div class="cloud cloud-1">☁️</div>
+        <div class="cloud cloud-2">☁️</div>
+        <div class="cloud cloud-3">⛅</div>
+
+        <div class="home-header">
+          <div>
+            <h1 class="greeting" id="greetingText">Chào buổi sáng! 🌸</h1>
+            <p class="greeting-sub">Hôm nay là một ngày tuyệt vời để<br/>ghi lại những khoảnh khắc đáng nhớ</p>
+          </div>
+        </div>
+
+        <div class="date-pill">
+          <span>📅</span>
+          <span id="currentDate">04 Tháng 5, 2026</span>
+        </div>
+        <!-- Streak Badge -->
+        <div id="streakBadge" style="display:none;background:linear-gradient(135deg,#ff9a4d,#ff6b35);color:white;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;margin:0 16px 4px;width:fit-content;align-items:center;gap:4px;box-shadow:0 2px 8px rgba(255,107,53,0.35);"></div>
+
+        <!-- Partner Widget -->
+        <div class="partner-widget" id="partnerWidget" onclick="showPartnerModal()">
+          <div class="partner-widget-left">
+            <div class="partner-avatar-sm">🐻</div>
+            <div class="partner-dot online"></div>
+          </div>
+          <div class="partner-widget-info">
+            <div class="partner-widget-name">Gấu của bạn 🐻</div>
+            <div class="partner-widget-mood">😴 Buồn ngủ · hôm nay lúc 07:30</div>
+          </div>
+          <div class="partner-widget-react" onclick="event.stopPropagation();sendHeartToPartner()">
+            <span id="partnerHeartBtn">🤍</span>
+          </div>
+        </div>
+
+        <!-- Highlight Cards Container -->
+        <div id="homeHighlights">
+          <!-- Injected by JS -->
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-container" id="timelineContainer">
+          <!-- Items injected by JS -->
+        </div>
+      </div>
+
+      <!-- SCREEN: JOURNAL -->
+      <div class="screen" id="screen-journal">
+        <div class="page-header">
+          <h2 class="page-title">📖 Nhật ký</h2>
+          <div class="view-toggle">
+            <button class="view-btn active" id="listViewBtn" onclick="setView('list')">≡</button>
+            <button class="view-btn" id="gridViewBtn" onclick="setView('grid')">⊞</button>
+          </div>
+        </div>
+
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Tìm kiếm nhật ký..." class="search-input" id="journalSearch" oninput="filterJournal()" />
+        </div>
+
+        <div class="filter-chips">
+          <button class="chip active" onclick="filterByMood('all', this)">Tất cả</button>
+          <button class="chip" onclick="filterByMood('love', this)">❤️ Yêu</button>
+          <button class="chip" onclick="filterByMood('happy', this)">⭐ Hào hứng</button>
+          <button class="chip" onclick="filterByMood('peaceful', this)">💙 Bình yên</button>
+          <button class="chip" onclick="filterByMood('tired', this)">😴 Mệt mỏi</button>
+        </div>
+
+        <div class="journal-list" id="journalList">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- SCREEN: STATS -->
+      <div class="screen" id="screen-stats">
+        <div class="stats-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:0 4px">
+          <div class="page-title">📊 Thống kê</div>
+          <div class="stats-header-icons" style="display:flex;gap:8px;align-items:center">
+            <div class="notif-bell-wrapper" onclick="window.toggleNotifCenter()" style="position:relative;cursor:pointer">
+              <button class="icon-btn" style="background:white;box-shadow:0 4px 12px rgba(0,0,0,0.05);border-radius:50%;width:40px;height:40px;border:none;font-size:18px">🔔</button>
+              <span id="notifCount" class="notif-badge" style="display:none">0</span>
+            </div>
+            <button class="icon-btn" onclick="showSecurityModal()" style="background:white;box-shadow:0 4px 12px rgba(0,0,0,0.05);border-radius:50%;width:40px;height:40px;border:none;font-size:18px">🔒</button>
+          </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="pastel-card" id="statsCalCard">
+          <div class="calendar-nav">
+            <button class="nav-arrow" onclick="changeMonth(-1)">‹</button>
+            <span class="calendar-month" id="calMonth">May, 2026</span>
+            <button class="nav-arrow" onclick="changeMonth(1)">›</button>
+          </div>
+          <div class="calendar-grid" id="calendarGrid">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+
+
+        <div class="stats-card" id="statsPieCard">
+          <div class="stats-card-title">🥧 Phân bổ cảm xúc tháng này</div>
+          <div class="pie-wrapper" style="position:relative; display:flex; justify-content:center; align-items:center; padding: 20px 0;">
+            <canvas id="moodPieChart" width="240" height="240" style="cursor:pointer"></canvas>
+            <div id="pieTooltip" class="pie-tooltip" style="display:none"></div>
+          </div>
+        </div>
+
+        <div style="height:80px"></div>
+      </div>
+
+      <!-- MODAL: Photo Gallery -->
+      <div class="modal-overlay" id="photoGalleryModal" onclick="closeModal('photoGalleryModal',event)">
+        <div class="modal-sheet full-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">🖼️ Bộ sưu tập ảnh</h3>
+          <p class="modal-sub" id="gallerySubtitle">Tất cả ảnh bạn đã lưu trong nhật ký</p>
+          <div id="galleryGrid" class="gallery-grid"></div>
+          <div id="galleryEmpty" style="display:none;text-align:center;padding:40px 0;color:#a0aec0;font-size:13px">🌸 Chưa có ảnh nào được lưu.<br/>Hãy thêm ảnh khi viết nhật ký nhé!</div>
+          <button class="close-btn" onclick="closeModal('photoGalleryModal')">Đóng</button>
+        </div>
+      </div>
+
+      <!-- SCREEN: ME -->
+      <div class="screen" id="screen-me">
+        <div class="profile-header">
+          <div class="avatar-wrapper" onclick="openAvatarEdit()">
+            <div class="avatar" id="profileAvatar">🐰</div>
+            <div class="avatar-badge">✨</div>
+          </div>
+          <div class="profile-name" id="profileName">Mochi Chan</div>
+          <div class="profile-sub" id="profileBio">Yêu cuộc sống từng khoảnh khắc nhỏ 🌸</div>
+        </div>
+
+        <!-- Streak -->
+        <div class="streak-card">
+          <div class="streak-item">
+            <span class="streak-num" id="meStreakNum">0</span>
+            <span class="streak-label">🔥 Streak</span>
+          </div>
+          <div class="streak-divider"></div>
+          <div class="streak-item">
+            <span class="streak-num" id="meTotalEntries">0</span>
+            <span class="streak-label">📝 Nhật ký</span>
+          </div>
+          <div class="streak-divider"></div>
+          <div class="streak-item">
+            <span class="streak-num" id="meTotalDays">0</span>
+            <span class="streak-label">📅 Ngày</span>
+          </div>
+        </div>
+
+        <!-- Partner Card: Shows when connected -->
+        <div class="partner-connect-card" id="partnerCard" style="display:none">
+          <div class="partner-connect-header">
+            <div class="partner-connect-title">💑 Bạn đồng hành</div>
+            <div class="partner-connect-sub">Chia sẻ nhật ký với người thân yêu</div>
+          </div>
+          <div id="partnerConnectedView">
+            <div class="partner-profile-row">
+              <div class="partner-profile-pair">
+                <div class="pair-avatar me">🐰</div>
+                <div class="pair-heart">💕</div>
+                <div class="pair-avatar them">🐻</div>
+              </div>
+              <div class="partner-profile-info">
+                <div class="partner-name-big">Gấu của bạn 🐻</div>
+                <div class="partner-status-row"><span class="online-dot"></span> Đang hoạt động</div>
+              </div>
+            </div>
+            <div class="partner-action-row">
+              <button class="partner-btn view" onclick="showSharedTimeline()">👁️ Xem nhật ký chung</button>
+              <button class="partner-btn msg" onclick="showPartnerChat()">💌 Nhắn tin nhanh</button>
+            </div>
+            <div class="partner-privacy-row">
+              <span class="partner-privacy-label">🔒 Quyền riêng tư</span>
+              <select class="privacy-select" id="privacyLevel">
+                <option value="all">Chia sẻ tất cả</option>
+                <option value="mood">Chỉ mood, không text</option>
+                <option value="none">Không chia sẻ tạm thời</option>
+              </select>
+            </div>
+            <button class="partner-disconnect-btn" onclick="disconnectPartner()">Ngắt kết nối</button>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="pastel-card">
+          <h3 class="card-title">🏆 Thành tựu của tôi</h3>
+          <div class="badge-grid" id="badgeGrid">
+            <div class="badge locked" id="badge-newbie" title="Viết nhật ký đầu tiên">🐣<span>Lính mới</span></div>
+            <div class="badge locked" id="badge-streak7" title="Đạt chuỗi 7 ngày liên tiếp">🔥<span>Bền bỉ</span></div>
+            <div class="badge locked" id="badge-moods" title="Trải nghiệm 5 loại cảm xúc">🌈<span>Đa cảm</span></div>
+            <div class="badge locked" id="badge-photo" title="Lưu giữ khoảnh khắc với ảnh">📸<span>Nghệ sĩ</span></div>
+            <div class="badge locked" id="badge-partner" title="Kết nối với người thương">💖<span>Gắn kết</span></div>
+            <div class="badge locked" id="badge-master" title="Đạt chuỗi 30 ngày liên tiếp">🏆<span>Master</span></div>
+          </div>
+        </div>
+
+        <!-- Premium Connection Card (Shows when not connected) -->
+        <div id="partnerDisconnectedView">
+          <div class="me-section-title">Kết nối</div>
+          <div class="me-premium-card">
+            <div class="me-id-container">
+              <div class="me-id-label-row">
+                <span class="me-id-label">Mã cá nhân của bạn</span>
+              </div>
+              <div class="me-id-display-box" onclick="copyMyId()">
+                <span class="me-id-value" id="myIdDisplay">CHƯA CÓ MÃ</span>
+                <span class="me-id-copy-hint">Sao chép 📋</span>
+              </div>
+              <p style="font-size:11px;color:#a0aec0;margin:0;text-align:center">Chia sẻ mã này để người thương tìm thấy bạn nhé! ✨</p>
+            </div>
+            
+            <div style="height:20px;border-bottom:1px solid rgba(0,0,0,0.03);margin-bottom:20px"></div>
+            
+            <div class="me-connect-title">Kết nối với người thương</div>
+            <div class="me-connect-row">
+              <input type="text" id="partnerIdInput" class="me-connect-input" placeholder="Nhập mã 6 ký tự...">
+              <button onclick="connectPartner()" class="me-connect-btn">Kết nối</button>
+            </div>
+            <div id="partnerStatus" style="font-size:12px;color:#718096;margin-top:10px;text-align:center">Chưa kết nối</div>
+          </div>
+        </div>
+
+        <!-- Premium Settings Card -->
+        <div class="me-section-title">Cài đặt</div>
+        <div class="me-premium-card">
+          <div class="me-setting-item">
+            <div class="me-setting-icon-box">🖼️</div>
+            <div class="me-setting-content">
+              <div class="me-setting-label">Hình nền theo ảnh</div>
+              <div class="me-setting-sub">Tự động đổi màu nền theo ảnh nhật ký</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked id="wallpaperToggle" onchange="toggleWallpaper()"/><span class="slider"></span></label>
+          </div>
+          
+          <div class="me-setting-item" onclick="showLanguageModal()">
+            <div class="me-setting-icon-box">🌐</div>
+            <div class="me-setting-content">
+              <div class="me-setting-label">Ngôn ngữ</div>
+              <div class="me-setting-sub">Chọn ngôn ngữ hiển thị ưu thích</div>
+            </div>
+            <div class="me-setting-right">
+              <span class="me-setting-value" id="langValue">Tiếng Việt</span>
+              <span class="me-setting-arrow">›</span>
+            </div>
+          </div>
+
+          <div class="me-setting-item" onclick="showMoodSetModal()">
+            <div class="me-setting-icon-box">😊</div>
+            <div class="me-setting-content">
+              <div class="me-setting-label">Bộ cảm xúc</div>
+              <div class="me-setting-sub">Thay đổi phong cách emoji Mochi</div>
+            </div>
+            <div class="me-setting-right">
+              <span class="me-setting-value" id="moodSetValue">Mochi</span>
+              <span class="me-setting-arrow">›</span>
+            </div>
+          </div>
+
+          <div class="me-setting-item" onclick="showSecurityModal()">
+            <div class="me-setting-icon-box">🔒</div>
+            <div class="me-setting-content">
+              <div class="me-setting-label">Bảo mật ứng dụng</div>
+              <div class="me-setting-sub">FaceID, vân tay hoặc mật khẩu</div>
+            </div>
+            <div class="me-setting-right">
+              <span class="me-setting-value" id="securityValue">FaceID</span>
+              <span class="me-setting-arrow">›</span>
+            </div>
+          </div>
+
+          <div class="me-setting-item" onclick="showNotifModal()">
+            <div class="me-setting-icon-box">🔔</div>
+            <div class="me-setting-content">
+              <div class="me-setting-label">Nhắc nhở viết nhật ký</div>
+              <div class="me-setting-sub">Nhận thông báo ghi lại cảm xúc hàng ngày</div>
+            </div>
+            <div class="me-setting-right">
+              <span class="me-setting-value" id="reminderValue">21:00</span>
+              <span class="me-setting-arrow">›</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="logout()" style="width: calc(100% - 32px); margin: 0 16px 20px; padding: 16px; background: rgba(255, 0, 0, 0.05); color: #ff4d4f; border: 1px solid rgba(255, 0, 0, 0.1); border-radius: 18px; font-weight: 800; font-size: 14px; cursor: pointer;">Đăng xuất 👋</button>
+        <div style="height:80px"></div>
+      </div>
+
+      <!-- ===================== FAB + MODALS ===================== -->
+
+      <!-- Camera Live Preview Modal -->
+      <div class="modal-overlay" id="cameraModal" onclick="if(event.target===this) closeCameraModal()">
+        <div class="modal-sheet camera-sheet">
+          <div class="sheet-handle"></div>
+          <!-- Photo count badge -->
+          <div id="camPhotoCount" class="cam-count-badge" style="display:none">📸 <span id="camCountNum">0</span> ảnh</div>
+          <div class="camera-preview-wrapper">
+            <video id="cameraVideo" class="camera-video mirrored" autoplay playsinline></video>
+            <canvas id="cameraCanvas" style="display:none"></canvas>
+            <div class="camera-frame-overlay">
+              <div class="camera-corner tl"></div>
+              <div class="camera-corner tr"></div>
+              <div class="camera-corner bl"></div>
+              <div class="camera-corner br"></div>
+            </div>
+          </div>
+          <div class="camera-controls">
+            <button class="cam-ctrl-btn" onclick="flipCamera()" title="Đổi camera" id="flipBtn">🔀</button>
+            <button class="cam-shutter-btn" onclick="takePhoto()" id="shutterBtn">
+              <div class="shutter-ring"><div class="shutter-inner"></div></div>
+            </button>
+            <button class="cam-ctrl-btn" onclick="closeCameraModal()" title="Đóng">✕</button>
+          </div>
+          <!-- Captured thumbnails strip -->
+          <div id="camThumbnailStrip" class="cam-thumbnail-strip" style="display:none">
+            <div id="camThumbList" class="cam-thumb-list"></div>
+            <button class="cam-done-btn" onclick="doneMultiPhoto()">✅ Xong (<span id="camDoneCount">0</span> ảnh)</button>
+          </div>
+          <!-- Single photo preview (after shutter) -->
+          <div id="photoPreviewRow" class="photo-preview-row" style="display:none">
+            <img id="capturedPreview" class="captured-img" src="" alt="ảnh vừa chụp"/>
+            <div class="photo-actions">
+              <button class="photo-action-btn retry" onclick="retakePhoto()">🔁 Chụp lại</button>
+              <button class="photo-action-btn add-more" onclick="addMorePhoto()">➕ Thêm ảnh</button>
+              <button class="photo-action-btn use" onclick="usePhoto()">✅ Dùng</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- MODAL: Camera Source Selection -->
+      <div class="modal-overlay" id="cameraSourceModal" onclick="if(event.target===this) this.classList.remove('open')">
+        <div class="modal-sheet source-sheet">
+          <div class="sheet-handle"></div>
+          <div class="source-title">Thêm hình ảnh 📸</div>
+          <div class="source-options">
+            <div class="source-opt" onclick="openLiveCamera()">
+              <div class="source-icon">📷</div>
+              <div class="source-label">Chụp ảnh mới</div>
+            </div>
+            <div class="source-opt" onclick="document.getElementById('albumInput').click(); document.getElementById('cameraSourceModal').classList.remove('open')">
+              <div class="source-icon">🖼️</div>
+              <div class="source-label">Chọn từ album</div>
+            </div>
+          </div>
+          <button class="source-cancel" onclick="document.getElementById('cameraSourceModal').classList.remove('open')">Hủy</button>
+        </div>
+      </div>
+      <input type="file" accept="image/*" multiple id="albumInput" style="display:none" onchange="useAlbumPhotos(event)"/>
+
+      <!-- MODAL: Mood Picker (Step 1) -->
+      <div class="modal-overlay" id="moodPickerModal" onclick="closeMoodPicker(event)">
+        <div class="modal-sheet" id="moodPickerSheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">Chọn cảm xúc</h3>
+          <p class="modal-sub">Chạm vào emoji để bắt đầu viết nhật ký.</p>
+          <div class="emoji-grid" id="moodPickerGrid">
+            <!-- Rendered dynamically by entry.js -->
+          </div>
+          <button class="close-btn" onclick="closeMoodPicker()">Đóng</button>
+        </div>
+      </div>
+
+
+      <!-- MODAL: Write Entry (Step 2) -->
+      <div class="modal-overlay" id="writeModal" onclick="closeWriteModal(event)">
+        <div class="modal-sheet full-sheet" id="writeSheet">
+          <div class="sheet-handle"></div>
+          <div class="write-header">
+            <div class="selected-mood-badge" id="selectedMoodBadge">❤️ Yêu</div>
+            <div class="write-time" id="writeTime">09:17</div>
+          </div>
+          <textarea class="write-textarea" id="writeTextarea" placeholder="Hôm nay bạn có gì muốn kể không?..."></textarea>
+
+          <!-- Activity tags -->
+          <div class="activity-section">
+            <p class="activity-title" style="display:flex;justify-content:space-between;align-items:center">
+              <span>🏷️ Hoạt động</span>
+              <button onclick="toggleCustomTagInput()" style="background:none;border:none;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer">+ Thêm tag</button>
+            </p>
+            <div id="customTagInputRow" style="display:none;margin-bottom:10px;gap:6px">
+              <input type="text" id="customTagInput" placeholder="Ví dụ: ☕ Cà phê" style="flex:1;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:12px;outline:none" onkeypress="if(event.key==='Enter') addCustomTag()">
+              <button onclick="addCustomTag()" style="padding:8px 12px;background:var(--accent);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">Thêm</button>
+            </div>
+            <div class="activity-chips" id="activityChips">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+
+          <!-- Image preview -->
+          <div class="image-preview-area" id="imagePreviewArea" style="display:none">
+            <div class="img-preview-list" id="imgPreviewList"></div>
+          </div>
+
+          <!-- Share with partner toggle -->
+          <div class="share-partner-row" id="sharePartnerRow">
+            <span class="share-partner-label">🔗 Chia sẻ với Gấu của bạn 🐻</span>
+            <label class="toggle"><input type="checkbox" id="shareWithPartner" checked/><span class="slider"></span></label>
+          </div>
+
+          <div class="write-toolbar">
+            <button class="toolbar-btn" title="Thêm ảnh" onclick="showCameraSource()">📷</button>
+            <button class="save-btn" onclick="saveEntry()">Lưu 💾</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MODAL: Day Detail -->
+      <div class="modal-overlay" id="dayDetailModal" onclick="closeDayDetail(event)">
+        <div class="modal-sheet full-sheet" id="dayDetailSheet">
+          <div class="sheet-handle"></div>
+          <div class="day-detail-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <button class="nav-arrow" onclick="prevDay()">‹</button>
+            <div style="flex:1;text-align:center">
+              <div class="day-detail-date" id="detailDate">3 Tháng 5, 2026</div>
+              <div class="day-detail-dow" id="detailDow" style="display:inline-block;margin-right:8px">Chủ Nhật</div>
+              <button onclick="openAddEventModal()" style="background:none;border:none;color:var(--accent);font-weight:800;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:12px;background:#f7f0ff">+ Sự kiện</button>
+            </div>
+            <button class="nav-arrow" onclick="nextDay()">›</button>
+          </div>
+          <div id="dayDetailContent" class="day-detail-content"></div>
+        </div>
+      </div>
+
+      <!-- MODAL: Add Event -->
+      <div class="modal-overlay" id="eventModal" onclick="closeModal('eventModal',event)">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">📅 Thêm sự kiện</h3>
+          <p class="modal-sub" id="eventModalDate">Cho ngày 20 Tháng 5, 2026</p>
+          
+          <label style="font-size:12px;font-weight:700;color:#718096;display:block;margin-bottom:6px">Tên sự kiện</label>
+          <input type="text" id="eventNameInput" placeholder="VD: Nhận lương, Kỷ niệm..." maxlength="30"
+            style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;outline:none;box-sizing:border-box;margin-bottom:12px"
+            onfocus="this.style.borderColor='#b583f5'" onblur="this.style.borderColor='#e2e8f0'">
+            
+          <label style="font-size:12px;font-weight:700;color:#718096;display:block;margin-bottom:6px">Icon</label>
+          <div class="emoji-grid" style="grid-template-columns:repeat(6,1fr);margin-bottom:12px">
+            <div class="emoji-item event-icon-opt" onclick="selectEventIcon('💰', this)"><div class="emoji-face">💰</div></div>
+            <div class="emoji-item event-icon-opt" onclick="selectEventIcon('🎂', this)"><div class="emoji-face">🎂</div></div>
+            <div class="emoji-item event-icon-opt" onclick="selectEventIcon('✈️', this)"><div class="emoji-face">✈️</div></div>
+            <div class="emoji-item event-icon-opt" onclick="selectEventIcon('🎉', this)"><div class="emoji-face">🎉</div></div>
+            <div class="emoji-item event-icon-opt" onclick="selectEventIcon('💑', this)"><div class="emoji-face">💑</div></div>
+            <div class="emoji-item event-icon-opt" onclick="selectEventIcon('🗓️', this)"><div class="emoji-face">🗓️</div></div>
+          </div>
+
+          <label style="font-size:12px;font-weight:700;color:#718096;display:block;margin-bottom:6px">Lặp lại</label>
+          <select id="eventRepeatSelect" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;outline:none;box-sizing:border-box;margin-bottom:20px;appearance:none;background:white">
+            <option value="none">Không lặp (Chỉ một lần)</option>
+            <option value="monthly">Hàng tháng (Cùng ngày này)</option>
+            <option value="yearly">Hàng năm (Cùng ngày tháng này)</option>
+          </select>
+
+          <button onclick="saveCustomEvent()" style="width:100%;padding:14px;background:linear-gradient(135deg,#b583f5,#7bc8f6);color:white;border:none;border-radius:16px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">💾 Lưu sự kiện</button>
+          <button class="close-btn" onclick="closeModal('eventModal')">Hủy</button>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="securityModal" onclick="closeModal('securityModal',event)">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">🔒 Bảo mật ứng dụng</h3>
+          <p class="modal-sub">Chọn phương thức bảo vệ nhật ký của bạn</p>
+          <div class="emoji-grid" style="grid-template-columns: 1fr; gap: 8px;">
+            <div class="emoji-item" onclick="selectSecurityOption('faceid')" style="flex-direction: row; justify-content: space-between; padding: 16px; width: 100%; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 24px;">👤</span>
+                <span style="font-size: 14px; font-weight: 700;">FaceID / Vân tay</span>
+              </div>
+              <span style="color: #cbd5e0;">›</span>
+            </div>
+            <div class="emoji-item" onclick="selectSecurityOption('pin')" style="flex-direction: row; justify-content: space-between; padding: 16px; width: 100%; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 24px;">🔢</span>
+                <span style="font-size: 14px; font-weight: 700;">Mã PIN</span>
+              </div>
+              <span style="color: #cbd5e0;">›</span>
+            </div>
+            <div class="emoji-item" onclick="selectSecurityOption('none')" style="flex-direction: row; justify-content: space-between; padding: 16px; width: 100%; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 24px;">🚫</span>
+                <span style="font-size: 14px; font-weight: 700;">Tắt bảo mật</span>
+              </div>
+              <span style="color: #cbd5e0;">›</span>
+            </div>
+          </div>
+          <button class="close-btn" onclick="closeModal('securityModal')">Hủy</button>
+        </div>
+      </div>
+
+      <!-- MODAL: Notif -->
+      <div class="modal-overlay" id="notifModal" onclick="closeModal('notifModal',event)">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">🔔 Nhắc nhở viết nhật ký</h3>
+          <p class="modal-sub">Chọn giờ bạn muốn được nhắc nhở mỗi ngày</p>
+          <input type="time" value="21:00" class="time-input" id="reminderTime"/>
+          <div style="height:12px"></div>
+          <button class="save-btn" style="width:100%" onclick="saveReminder()">Lưu nhắc nhở</button>
+          <div style="height:8px"></div>
+          <button class="close-btn" onclick="closeModal('notifModal')">Đóng</button>
+        </div>
+      </div>
+
+      <!-- MODAL: Invite Partner -->
+      <div class="modal-overlay" id="inviteModal" onclick="closeModal('inviteModal',event)">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">📨 Mời bạn đồng hành</h3>
+          <p class="modal-sub">Gửi mã này cho người bạn muốn kết nối<br/>Mã có hiệu lực trong 24 giờ</p>
+          <div class="invite-code-box">
+            <div class="invite-code" id="inviteCode">M0CH14</div>
+            <button class="copy-code-btn" onclick="copyInviteCode()">📋 Sao chép</button>
+          </div>
+          <div class="invite-share-row">
+            <button class="share-app-btn" onclick="shareViaApp('zalo')">💬 Zalo</button>
+            <button class="share-app-btn" onclick="shareViaApp('mess')">📘 Messenger</button>
+            <button class="share-app-btn" onclick="shareViaApp('sms')">📱 SMS</button>
+          </div>
+          <p style="font-size:11px;color:#a0aec0;text-align:center;margin-top:8px">Người kia sẽ thấy mood hàng ngày của bạn<br/>theo quyền riêng tư bạn đã chọn</p>
+          <button class="close-btn" onclick="closeModal('inviteModal')">Đóng</button>
+        </div>
+      </div>
+
+      <!-- MODAL: Join via Code -->
+      <div class="modal-overlay" id="joinModal" onclick="closeModal('joinModal',event)">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">🔗 Nhập mã mời</h3>
+          <p class="modal-sub">Nhập mã 6 ký tự từ người bạn muốn kết nối</p>
+          <input type="text" class="code-input" id="joinCodeInput" maxlength="6" placeholder="VD: M0CH14" oninput="this.value=this.value.toUpperCase()"/>
+          <div style="height:12px"></div>
+          <button class="save-btn" style="width:100%" onclick="joinWithCode()">Kết nối 💑</button>
+          <div style="height:8px"></div>
+          <button class="close-btn" onclick="closeModal('joinModal')">Đóng</button>
+        </div>
+      </div>
+
+      <!-- MODAL: Shared Timeline -->
+      <div class="modal-overlay" id="sharedTimelineModal" onclick="closeModal('sharedTimelineModal',event)">
+        <div class="modal-sheet full-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">💕 Nhật ký chung</h3>
+          <p class="modal-sub">Hành trình của hai bạn cùng nhau</p>
+          <div class="shared-tabs">
+            <button class="shared-tab active" id="stab-both" onclick="switchSharedTab('both',this)">Cả hai</button>
+            <button class="shared-tab" id="stab-me" onclick="switchSharedTab('me',this)">🐰 Tôi</button>
+            <button class="shared-tab" id="stab-partner" onclick="switchSharedTab('partner',this)">🐻 Gấu</button>
+          </div>
+          <div class="chat-quick-reacts">
+            <button class="quick-react" onclick="sendQuickReact('❤️')">❤️</button>
+            <button class="quick-react" onclick="sendQuickReact('🤗')">🤗</button>
+            <button class="quick-react" onclick="sendQuickReact('💪')">💪</button>
+            <button class="quick-react" onclick="sendQuickReact('😘')">😘</button>
+            <button class="quick-react" onclick="sendQuickReact('🌸')">🌸</button>
+          </div>
+          <div id="sharedTimelineContent" class="shared-timeline-content"></div>
+          <button class="close-btn" onclick="document.getElementById('sharedTimelineModal').classList.remove('open')">Đóng</button>
+        </div>
+      </div>
+
+      <!-- MODAL: Partner Chat -->
+      <div class="modal-overlay" id="partnerChatModal" onclick="closeModal('partnerChatModal',event)">
+        <div class="modal-sheet full-sheet">
+          <div class="sheet-handle"></div>
+          <div class="chat-header">
+            <div class="chat-partner-info">
+              <span class="chat-avatar">🐻</span>
+              <div>
+                <div class="chat-name">Gấu của bạn</div>
+            <div class="chat-status"><span class="online-dot"></span> Đang hoạt động</div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-quick-reacts">
+            <button class="quick-react" onclick="sendQuickReact('❤️')">❤️</button>
+            <button class="quick-react" onclick="sendQuickReact('🤗')">🤗</button>
+            <button class="quick-react" onclick="sendQuickReact('💪')">💪</button>
+            <button class="quick-react" onclick="sendQuickReact('😘')">😘</button>
+            <button class="quick-react" onclick="sendQuickReact('🌸')">🌸</button>
+          </div>
+          <div class="chat-input-row">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Nhắn gì đó đi..." onkeydown="if(event.key==='Enter')sendChatMsg()"/>
+            <button class="chat-send-btn" onclick="sendChatMsg()">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="partnerModal" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <div class="partner-modal-top">
+            <div class="partner-big-avatar" id="pModalAvatar">🐻</div>
+            <div class="partner-modal-name" id="pModalName">Gấu của bạn 🐻</div>
+            <div class="partner-modal-mood" id="pModalMood">Chưa có nhật ký hôm nay</div>
+            <div class="partner-modal-time" id="pModalTime"></div>
+          </div>
+          <div class="partner-modal-actions">
+            <button class="partner-btn view" onclick="document.getElementById('partnerModal').classList.remove('open'); openPartnerTimeline()">👁️ Nhật ký chung</button>
+            <button class="partner-btn msg" onclick="showToast('💌 Tính năng chat sẽ sớm ra mắt!')">💌 Nhắn tin nhanh</button>
+          </div>
+          <button class="close-btn" onclick="document.getElementById('partnerModal').classList.remove('open')">Đóng</button>
+        </div>
+      </div>
+
+      <!-- Confetti canvas -->
+      <canvas id="confettiCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999"></canvas>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+
+      <!-- ===================== BOTTOM NAV ===================== -->
+      <nav class="bottom-nav">
+        <button class="nav-item active" id="nav-home" onclick="switchTab('home')">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Home</span>
+        </button>
+        <button class="nav-item" id="nav-journal" onclick="switchTab('journal')">
+          <span class="nav-icon">📖</span>
+          <span class="nav-label">Journal</span>
+        </button>
+        <!-- FAB inside nav -->
+        <div class="nav-fab-wrapper">
+          <button class="nav-fab" id="fabBtn" onclick="showMoodPicker()" aria-label="Thêm nhật ký mới">
+            <span class="nav-fab-icon">+</span>
+          </button>
+        </div>
+        <button class="nav-item" id="nav-stats" onclick="switchTab('stats')">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Stats</span>
+        </button>
+        <button class="nav-item" id="nav-me" onclick="switchTab('me')">
+          <span class="nav-icon">👤</span>
+          <span class="nav-label">Me</span>
+        </button>
+      </nav>
+
+      <!-- ===== AVATAR EDIT MODAL ===== -->
+      <div class="modal-overlay" id="avatarEditModal" onclick="closeAvatarEdit(event)">
+        <div class="modal-sheet profile-edit-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">✨ Chỉnh sửa hồ sơ</h3>
+
+          <!-- Avatar preview + upload -->
+          <div class="avatar-edit-section">
+            <div class="premium-frame" id="previewFrame" onclick="document.getElementById('avatarImgInput').click()">
+              <div class="avatar-preview-container" id="avatarPreviewBig">
+                🐰
+              </div>
+              <div class="avatar-camera-badge">📷</div>
+            </div>
+            <input type="file" id="avatarImgInput" accept="image/*" style="display:none" onchange="handleAvatarImgUpload(event)">
+            <div class="avatar-edit-labels">
+              <p class="avatar-label-main">Ảnh đại diện của bạn</p>
+              <p class="avatar-label-sub">Nhấn vào ảnh để thay đổi</p>
+            </div>
+          </div>
+
+          <!-- Emoji avatar picker -->
+          <p class="edit-modal-label">Hoặc chọn avatar emoji:</p>
+          <div id="avatarEmojiGrid">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Frame picker -->
+          <p class="edit-modal-label">Khung hình đại diện:</p>
+          <div class="frame-picker-grid">
+            <div class="frame-opt active" onclick="selectFrame('none', this)">
+              <div class="frame-circle none"></div>
+              <span>Trống</span>
+            </div>
+            <div class="frame-opt" onclick="selectFrame('classic', this)">
+              <div class="frame-circle classic"></div>
+              <span>Classic</span>
+            </div>
+            <div class="frame-opt" onclick="selectFrame('royal', this)">
+              <div class="frame-circle royal"></div>
+              <span>Royal</span>
+            </div>
+            <div class="frame-opt" onclick="selectFrame('sparkle', this)">
+              <div class="frame-circle sparkle"></div>
+              <span>Sparkle</span>
+            </div>
+          </div>
+
+          <!-- Name -->
+          <label class="edit-modal-label">Tên hiển thị</label>
+          <input type="text" id="editNameInput" class="edit-input" placeholder="Nhập tên của bạn..." maxlength="20">
+
+          <!-- Bio -->
+          <label class="edit-modal-label">Bio ngắn</label>
+          <input type="text" id="editBioInput" class="edit-input" placeholder="Một câu về bản thân bạn..." maxlength="40">
+
+          <div style="height:12px"></div>
+          <button class="save-profile-btn" onclick="saveAvatarEdit()">💾 Lưu hồ sơ</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Lightbox for full-size image preview -->
+  <div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="ảnh phóng to"/>
+    <div class="lightbox-info" id="lightboxInfo"></div>
+  </div>
+
+  <!-- MODAL: Notification Center -->
+  <div class="modal-overlay" id="notifCenterModal" onclick="closeModal('notifCenterModal',event)">
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      <h3 class="modal-title">🔔 Thông báo của bạn</h3>
+      <div id="notifCenterList" class="notif-center-list">
+        <!-- Injected by JS -->
+      </div>
+      <button class="close-btn" onclick="closeModal('notifCenterModal')" style="width:100%;margin-top:12px">Đóng</button>
+    </div>
+  </div>
+      <defs>
+        <mask id="tourMask">
+          <rect width="100%" height="100%" fill="white"/>
+          <rect id="tourHole" x="0" y="0" width="0" height="0" rx="16" fill="black"/>
+        </mask>
+      </defs>
+      <rect width="100%" height="100%" fill="rgba(0,0,0,0.65)" mask="url(#tourMask)"/>
+    </svg>
+    <!-- Tooltip bubble -->
+    <div id="tourTooltip" style="position:absolute;background:white;border-radius:20px;padding:16px 20px;max-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.25);pointer-events:all">
+      <div id="tourMascot" style="font-size:36px;text-align:center;margin-bottom:6px">🧁</div>
+      <p id="tourText" style="font-size:13px;font-weight:700;color:#4a5568;line-height:1.5;text-align:center;margin:0 0 12px"></p>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="tourSkipBtn" onclick="skipTour()" style="background:none;border:1px solid #e2e8f0;border-radius:12px;padding:8px 16px;font-size:12px;color:#718096;cursor:pointer;font-family:inherit">Bỏ qua</button>
+        <button id="tourNextBtn" onclick="nextTourStep()" style="background:linear-gradient(135deg,#b583f5,#7bc8f6);color:white;border:none;border-radius:12px;padding:8px 20px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">Tiếp →</button>
+      </div>
+      <div id="tourDots" style="display:flex;justify-content:center;gap:6px;margin-top:10px"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="src/main.js?v=7.0"></script>
+</body>
+</html>
