@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mochi-mood-v14';
+const CACHE_NAME = 'mochi-mood-v15';
 const ASSETS = [
   './',
   './index.html',
