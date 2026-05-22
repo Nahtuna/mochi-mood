@@ -127,6 +127,19 @@ mochi-mood/
 ### Triển khai (Deployment)
 Ứng dụng có thể được triển khai dễ dàng lên **Vercel**, **Netlify** hoặc **GitHub Pages** vì đây là một dự án Static Web hoàn toàn.
 
+### 📱 Cài đặt trên Điện thoại (Progressive Web App - PWA)
+Mochi Mood hỗ trợ công nghệ PWA đầy đủ, cho phép bạn cài đặt trực tiếp vào màn hình chính của điện thoại để hoạt động như một app native (có icon riêng, mở full-screen và load siêu tốc):
+
+- **Trên iPhone (Trình duyệt Safari):**
+  1. Mở Safari, truy cập vào đường link Vercel của bạn.
+  2. Bấm nút **Share** (chia sẻ) có hình ô vuông và mũi tên chỉ lên ở thanh công cụ dưới cùng.
+  3. Cuộn xuống và chọn **"Add to Home Screen"** (Thêm vào màn hình chính).
+
+- **Trên Android (Trình duyệt Chrome):**
+  1. Mở Chrome, truy cập vào đường link Vercel của bạn.
+  2. Bấm vào biểu tượng dấu **3 chấm** ở góc trên bên phải.
+  3. Chọn **"Install app"** (Cài đặt ứng dụng) hoặc **"Add to Home Screen"** (Thêm vào màn hình chính).
+
 ---
 
 ## 📈 6. Lịch sử cập nhật (Changelog)
