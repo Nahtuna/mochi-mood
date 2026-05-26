@@ -170,3 +170,18 @@ export function initDate() {
     writeTimeEl.textContent = `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 }
+
+export function getDevicePlatform() {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/iphone|ipad|ipod/.test(ua)) return 'ios';
+  if (/android/.test(ua)) return 'android';
+  return 'desktop';
+}
+
+export function getDeviceBiometricName() {
+  const platform = getDevicePlatform();
+  if (platform === 'ios') return 'FaceID / TouchID';
+  if (platform === 'android') return 'Vân tay / Khuôn mặt';
+  return 'Windows Hello / Sinh trắc học';
+}
+

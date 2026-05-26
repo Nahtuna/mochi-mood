@@ -1,6 +1,6 @@
 import { checkAuth, handleAuthSubmit, handleGoogleLogin, switchAuthTab, togglePasswordVisibility, logout } from './modules/auth.js';
 import { loadFromStorage, signOut } from './api.js';
-import { showToast, initGreeting, initDate } from './utils.js';
+import { showToast, initGreeting, initDate, getDevicePlatform } from './utils.js';
 import { state } from './state.js';
 import { renderTimeline, renderHighlights, renderStreak } from './modules/home.js';
 import { renderJournal, setView, filterJournal, filterByMood } from './modules/journal.js';
@@ -12,8 +12,11 @@ import {
 import { 
   openAvatarEdit, closeAvatarEdit, handleAvatarImgUpload, saveAvatarEdit, updateProfileUI,
   toggleWallpaper, showLanguageModal, showMoodSetModal, showSecurityModal, showNotifModal, saveReminder,
-  selectFrame, selectAvatarEmoji, selectSecurityOption
+  selectFrameOption, selectAvatarEmoji, selectSecurityOption
 } from './modules/profile.js';
+import { 
+  initShop, openMochiShop, switchShopTab, buyFrame, equipFrame, buyWallpaper, applyWallpaper, feedMochi 
+} from './modules/shop.js';
 import { 
   renderPartnerWidget, renderPartnerInMe, copyMyId, connectPartner, 
   showSharedTimeline, switchSharedTab, sendHeartToPartner, joinWithCode, 
@@ -30,6 +33,8 @@ import {
 } from './modules/camera.js';
 import { openPhotoGallery, openLightbox, closeLightbox } from './modules/gallery.js';
 import { startTour, nextTourStep, skipTour } from './modules/onboarding.js';
+import { pressSetupKey, pressUnlockKey, triggerBiometricUnlock, checkSecurityLock } from './modules/security.js';
+import { initRituals, toggleRitual, renderRituals } from './modules/rituals.js';
 
 window.addEventListener('unhandledrejection', event => {
   console.error('Unhandled Promise rejection:', event.reason);
@@ -39,7 +44,7 @@ window.addEventListener('unhandledrejection', event => {
 
 console.log('Mochi Mood: Initializing main.js...');
 
-if ('serviceWorker' in navigator && false) { // Tạm thời tắt đăng ký SW để tránh cache trong lúc phát triển
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => console.log('Mochi Mood SW registered!'))
@@ -128,7 +133,7 @@ window.openAvatarEdit = openAvatarEdit;
 window.closeAvatarEdit = closeAvatarEdit;
 window.handleAvatarImgUpload = handleAvatarImgUpload;
 window.saveAvatarEdit = saveAvatarEdit;
-window.selectFrame = selectFrame;
+window.selectFrame = selectFrameOption;
 window.toggleWallpaper = toggleWallpaper;
 window.showLanguageModal = showLanguageModal;
 window.showMoodSetModal = showMoodSetModal;
@@ -142,6 +147,20 @@ window.closeLightbox = closeLightbox;
 window.startTour = startTour;
 window.nextTourStep = nextTourStep;
 window.skipTour = skipTour;
+window.pressSetupKey = pressSetupKey;
+window.pressUnlockKey = pressUnlockKey;
+window.triggerBiometricUnlock = triggerBiometricUnlock;
+window.updateProfileUI = updateProfileUI;
+window.toggleRitual = toggleRitual;
+window.renderRituals = renderRituals;
+window.selectFrameOption = selectFrameOption;
+window.openMochiShop = openMochiShop;
+window.switchShopTab = switchShopTab;
+window.buyFrame = buyFrame;
+window.equipFrame = equipFrame;
+window.buyWallpaper = buyWallpaper;
+window.applyWallpaper = applyWallpaper;
+window.feedMochi = feedMochi;
 
 // Render functions needed by inline HTML and other modules
 window.renderTimeline = renderTimeline;
@@ -243,6 +262,7 @@ window.MochiState = state;
 
 async function initApp() {
   console.log('Mochi Mood: Starting App Initialization...');
+  checkSecurityLock();
   
   try {
     initGreeting();
@@ -261,11 +281,96 @@ async function initApp() {
       updateProfileUI();
       renderPartnerWidget();
       renderPartnerInMe();
+      initRituals();
+      renderRituals();
+      initShop();
     }
+    checkStandaloneMode();
   } catch (err) {
     console.error('Mochi Mood: Initialization Error:', err);
   }
 }
+
+// ================= PWA INSTALLATION LOGIC =================
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  const pwaStatus = document.getElementById('pwaStatusValue');
+  if (pwaStatus) {
+    pwaStatus.textContent = 'Sẵn sàng';
+    pwaStatus.style.color = '#3ecf8e';
+  }
+  
+  const androidAuto = document.getElementById('pwaAndroidAuto');
+  const desktopAuto = document.getElementById('pwaDesktopAuto');
+  if (androidAuto) androidAuto.style.display = 'block';
+  if (desktopAuto) desktopAuto.style.display = 'block';
+});
+
+window.addEventListener('appinstalled', (evt) => {
+  console.log('Mochi Mood was installed.');
+  const pwaStatus = document.getElementById('pwaStatusValue');
+  if (pwaStatus) {
+    pwaStatus.textContent = 'Đã cài đặt';
+    pwaStatus.style.color = '#718096';
+  }
+  showToast('🎉 Cài đặt PWA thành công!');
+});
+
+function checkStandaloneMode() {
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    const pwaStatus = document.getElementById('pwaStatusValue');
+    if (pwaStatus) {
+      pwaStatus.textContent = 'Đã cài đặt';
+      pwaStatus.style.color = '#718096';
+    }
+  }
+}
+
+window.showPwaInstallModal = function() {
+  document.getElementById('pwaInstallModal')?.classList.add('open');
+  const platform = getDevicePlatform();
+  window.switchPwaTab(platform);
+  checkStandaloneMode();
+};
+
+window.switchPwaTab = function(platform) {
+  document.querySelectorAll('.pwa-content').forEach(c => c.style.display = 'none');
+  document.querySelectorAll('.pwa-tab').forEach(b => b.classList.remove('active'));
+  
+  const content = document.getElementById(`pwa-content-${platform}`);
+  if (content) content.style.display = 'block';
+  
+  const tabBtn = document.getElementById(`pwab-${platform}`);
+  if (tabBtn) tabBtn.classList.add('active');
+};
+
+window.triggerPwaInstall = async function() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`User response to prompt: ${outcome}`);
+  deferredPrompt = null;
+  
+  const androidAuto = document.getElementById('pwaAndroidAuto');
+  const desktopAuto = document.getElementById('pwaDesktopAuto');
+  if (androidAuto) androidAuto.style.display = 'none';
+  if (desktopAuto) desktopAuto.style.display = 'none';
+  
+  const pwaStatus = document.getElementById('pwaStatusValue');
+  if (pwaStatus) {
+    if (outcome === 'accepted') {
+      pwaStatus.textContent = 'Đã cài đặt';
+      pwaStatus.style.color = '#718096';
+      showToast('🎉 Cài đặt PWA thành công!');
+    } else {
+      pwaStatus.textContent = 'Sẵn sàng';
+      pwaStatus.style.color = '#3ecf8e';
+    }
+  }
+};
 
 // Start App
 if (document.readyState === 'loading') {
@@ -273,3 +378,4 @@ if (document.readyState === 'loading') {
 } else {
   initApp();
 }
+

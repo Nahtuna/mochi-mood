@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mochi-mood-v15';
+const CACHE_NAME = 'mochi-mood-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -20,7 +20,10 @@ const ASSETS = [
   './src/modules/camera.js',
   './src/modules/gallery.js',
   './src/modules/onboarding.js',
-  './src/modules/moodjar.js'
+  './src/modules/moodjar.js',
+  './src/modules/security.js',
+  './src/modules/rituals.js',
+  './src/modules/shop.js'
 ];
 
 self.addEventListener('install', event => {

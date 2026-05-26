@@ -133,6 +133,9 @@
           </div>
         </div>
 
+        <!-- Self-Care Rituals Widget -->
+        <div id="ritualsWidget"></div>
+
         <!-- Highlight Cards Container -->
         <div id="homeHighlights">
           <!-- Injected by JS -->
@@ -324,6 +327,25 @@
           </div>
         </div>
 
+        <!-- Mochi Shop Entrance -->
+        <div class="me-section-title">Tiệm tạp hóa Mochi 🏪</div>
+        <div class="me-premium-card" onclick="window.openMochiShop()" style="cursor:pointer; background:linear-gradient(135deg, rgba(255,240,245,0.8), rgba(240,245,255,0.8)); border:1.5px solid rgba(181,131,245,0.25); box-shadow:0 8px 24px rgba(181,131,245,0.08); margin-bottom: 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <span style="font-size:32px">🏪</span>
+              <div>
+                <div style="font-weight:800; font-size:15px; color:var(--text)">Ghé tiệm tạp hóa Mochi</div>
+                <div style="font-size:12px; color:#718096; margin-top:2px;">Dùng hạt sương 💧 đổi khung và quà xịn sò</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; background:white; padding:6px 12px; border-radius:20px; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+              <span style="font-size:14px">💧</span>
+              <span id="meDewsCount" style="font-weight:900; font-size:14px; color:#3182ce">0</span>
+              <span style="font-size:14px; color:#cbd5e0; margin-left:4px">›</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Premium Settings Card -->
         <div class="me-section-title">Cài đặt</div>
         <div class="me-premium-card">
@@ -368,6 +390,18 @@
             </div>
             <div class="me-setting-right">
               <span class="me-setting-value" id="securityValue">FaceID</span>
+              <span class="me-setting-arrow">›</span>
+            </div>
+          </div>
+
+          <div class="me-setting-item" onclick="window.showPwaInstallModal()">
+            <div class="me-setting-icon-box">📱</div>
+            <div class="me-setting-content">
+              <div class="me-setting-label">Cài đặt ứng dụng (PWA)</div>
+              <div class="me-setting-sub">Cài đặt Mochi Mood vào màn hình chính</div>
+            </div>
+            <div class="me-setting-right">
+              <span class="me-setting-value" id="pwaStatusValue" style="color: var(--accent); font-weight: 800;">Xem</span>
               <span class="me-setting-arrow">›</span>
             </div>
           </div>
@@ -567,13 +601,6 @@
           <h3 class="modal-title">🔒 Bảo mật ứng dụng</h3>
           <p class="modal-sub">Chọn phương thức bảo vệ nhật ký của bạn</p>
           <div class="emoji-grid" style="grid-template-columns: 1fr; gap: 8px;">
-            <div class="emoji-item" onclick="selectSecurityOption('faceid')" style="flex-direction: row; justify-content: space-between; padding: 16px; width: 100%; box-sizing: border-box;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 24px;">👤</span>
-                <span style="font-size: 14px; font-weight: 700;">FaceID / Vân tay</span>
-              </div>
-              <span style="color: #cbd5e0;">›</span>
-            </div>
             <div class="emoji-item" onclick="selectSecurityOption('pin')" style="flex-direction: row; justify-content: space-between; padding: 16px; width: 100%; box-sizing: border-box;">
               <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 24px;">🔢</span>
@@ -604,6 +631,98 @@
           <button class="save-btn" style="width:100%" onclick="saveReminder()">Lưu nhắc nhở</button>
           <div style="height:8px"></div>
           <button class="close-btn" onclick="closeModal('notifModal')">Đóng</button>
+        </div>
+      </div>
+
+      <!-- MODAL: PWA Install -->
+      <div class="modal-overlay" id="pwaInstallModal" onclick="closeModal('pwaInstallModal',event)">
+        <div class="modal-sheet">
+          <div class="sheet-handle"></div>
+          <h3 class="modal-title">📱 Cài đặt Mochi Mood PWA</h3>
+          <p class="modal-sub">Trải nghiệm mượt mà, đầy đủ tính năng và sử dụng offline</p>
+          
+          <div class="pwa-tabs" style="display:flex;gap:4px;background:#f7f0ff;padding:4px;border-radius:12px;margin-bottom:16px;">
+            <button class="pwa-tab active" id="pwab-ios" onclick="window.switchPwaTab('ios')" style="flex:1;padding:8px;border:none;border-radius:8px;background:none;font-weight:700;font-size:12px;cursor:pointer;color:#718096;">🍎 iOS</button>
+            <button class="pwa-tab" id="pwab-android" onclick="window.switchPwaTab('android')" style="flex:1;padding:8px;border:none;border-radius:8px;background:none;font-weight:700;font-size:12px;cursor:pointer;color:#718096;">🤖 Android</button>
+            <button class="pwa-tab" id="pwab-desktop" onclick="window.switchPwaTab('desktop')" style="flex:1;padding:8px;border:none;border-radius:8px;background:none;font-weight:700;font-size:12px;cursor:pointer;color:#718096;">💻 PC / Mac</button>
+          </div>
+          
+          <!-- Tab content: iOS -->
+          <div class="pwa-content" id="pwa-content-ios" style="display:none; font-size:13px; color:#4a5568; line-height:1.6;">
+            <div style="background:#fff5f7;padding:12px;border-radius:12px;margin-bottom:12px;border:1px solid #ffe3e8;display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">💡</span>
+              <span><b>Yêu cầu:</b> Mở trang bằng trình duyệt <b>Safari</b> trên iPhone của bạn.</span>
+            </div>
+            <ol style="margin:0;padding-left:20px;">
+              <li style="margin-bottom:8px;">Bấm vào biểu tượng <b>Chia sẻ</b> 📤 (Share) trên thanh công cụ của Safari ở dưới cùng.</li>
+              <li style="margin-bottom:8px;">Cuộn xuống dưới và chọn <b>"Thêm vào MH chính"</b> ➕ (Add to Home Screen).</li>
+              <li style="margin-bottom:8px;">Bấm <b>"Thêm"</b> (Add) ở góc trên bên phải để hoàn tất!</li>
+            </ol>
+          </div>
+          
+          <!-- Tab content: Android -->
+          <div class="pwa-content" id="pwa-content-android" style="display:none; font-size:13px; color:#4a5568; line-height:1.6;">
+            <div id="pwaAndroidAuto" style="margin-bottom:12px;display:none;">
+              <button onclick="window.triggerPwaInstall()" class="save-btn" style="width:100%;background:linear-gradient(135deg,#ff9a4d,#ff6b35);">Cài đặt ngay ✨</button>
+              <div style="text-align:center;font-size:11px;color:#a0aec0;margin-top:6px;">Bấm nút để cài đặt tự động vào điện thoại của bạn</div>
+            </div>
+            <div style="background:#f0f7ff;padding:12px;border-radius:12px;margin-bottom:12px;border:1px solid #d2e4ff;display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">💡</span>
+              <span><b>Yêu cầu:</b> Mở trang bằng trình duyệt <b>Chrome</b> trên điện thoại.</span>
+            </div>
+            <ol style="margin:0;padding-left:20px;">
+              <li style="margin-bottom:8px;">Bấm vào dấu <b>3 chấm</b> ⠇ ở góc trên bên phải Chrome.</li>
+              <li style="margin-bottom:8px;">Chọn <b>"Cài đặt ứng dụng"</b> 📲 (Install app) hoặc <b>"Thêm vào màn hình chính"</b>.</li>
+              <li style="margin-bottom:8px;">Xác nhận để Mochi hiển thị ngoài màn hình của bạn.</li>
+            </ol>
+          </div>
+          
+          <!-- Tab content: Desktop -->
+          <div class="pwa-content" id="pwa-content-desktop" style="display:none; font-size:13px; color:#4a5568; line-height:1.6;">
+            <div id="pwaDesktopAuto" style="margin-bottom:12px;display:none;">
+              <button onclick="window.triggerPwaInstall()" class="save-btn" style="width:100%;background:linear-gradient(135deg,#b583f5,#7bc8f6);">Cài đặt ngay ✨</button>
+              <div style="text-align:center;font-size:11px;color:#a0aec0;margin-top:6px;">Cài đặt Mochi Mood làm ứng dụng Desktop độc lập</div>
+            </div>
+            <ol style="margin:0;padding-left:20px;">
+              <li style="margin-bottom:8px;">Tìm và bấm vào biểu tượng cài đặt 🖥️ (Install) ở thanh địa chỉ của trình duyệt (góc trên bên phải).</li>
+              <li style="margin-bottom:8px;">Hoặc bấm dấu <b>3 chấm</b> góc trên bên phải, chọn <b>"Lưu và chia sẻ"</b> -> <b>"Cài đặt trang này làm ứng dụng..."</b>.</li>
+              <li style="margin-bottom:8px;">Xác nhận cài đặt để khởi chạy Mochi Mood như một app độc lập.</li>
+            </ol>
+          </div>
+          
+          <div style="height:16px"></div>
+          <button class="close-btn" onclick="closeModal('pwaInstallModal')">Đóng</button>
+        </div>
+      </div>
+
+      <!-- MODAL: Mochi Shop -->
+      <div class="modal-overlay" id="mochiShopModal" onclick="closeModal('mochiShopModal',event)">
+        <div class="modal-sheet" style="max-height:85vh; display:flex; flex-direction:column; padding-bottom: 20px;">
+          <div class="sheet-handle"></div>
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div>
+              <h3 class="modal-title" style="margin:0">🏪 Tiệm tạp hóa Mochi</h3>
+              <p class="modal-sub" style="margin:2px 0 0 0">Đổi hạt sương ngọt ngào lấy quà xịn</p>
+            </div>
+            <div class="dews-badge" style="background:#e0f2fe; padding:8px 14px; border-radius:20px; display:flex; align-items:center; gap:6px;">
+              <span style="font-size:16px">💧</span>
+              <span id="shopDewsCount" style="font-weight:900; font-size:16px; color:#0284c7">0</span>
+            </div>
+          </div>
+
+          <div class="shop-tabs" style="display:flex; gap:4px; background:#f3f4f6; padding:4px; border-radius:12px; margin-bottom:16px;">
+            <button class="pwa-tab active" id="shopt-frames" onclick="window.switchShopTab('frames')" style="flex:1; padding:8px; border:none; border-radius:8px; background:none; font-weight:700; font-size:12px; cursor:pointer; color:#718096;">🖼️ Khung</button>
+            <button class="pwa-tab" id="shopt-wallpapers" onclick="window.switchShopTab('wallpapers')" style="flex:1; padding:8px; border:none; border-radius:8px; background:none; font-weight:700; font-size:12px; cursor:pointer; color:#718096;">🎨 Nền</button>
+            <button class="pwa-tab" id="shopt-mascot" onclick="window.switchShopTab('mascot')" style="flex:1; padding:8px; border:none; border-radius:8px; background:none; font-weight:700; font-size:12px; cursor:pointer; color:#718096;">🐰 Nuôi Mochi</button>
+          </div>
+
+          <div style="flex:1; overflow-y:auto; padding-right:4px;" id="shopItemsContainer">
+            <!-- Dynamic Content based on selected tab -->
+          </div>
+
+          <div style="height:12px"></div>
+          <button class="close-btn" onclick="closeModal('mochiShopModal')" style="width:100%">Đóng tiệm</button>
         </div>
       </div>
 
@@ -770,24 +889,33 @@
 
           <!-- Frame picker -->
           <p class="edit-modal-label">Khung hình đại diện:</p>
-          <div class="frame-picker-grid">
-            <div class="frame-opt active" onclick="selectFrame('none', this)">
+          <div class="frame-picker-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; max-height:120px; overflow-y:auto; padding:4px;">
+            <div class="frame-opt active" id="fopt-none" onclick="window.selectFrameOption('none')">
               <div class="frame-circle none"></div>
               <span>Trống</span>
             </div>
-            <div class="frame-opt" onclick="selectFrame('classic', this)">
+            <div class="frame-opt" id="fopt-classic" onclick="window.selectFrameOption('classic')">
               <div class="frame-circle classic"></div>
               <span>Classic</span>
             </div>
-            <div class="frame-opt" onclick="selectFrame('royal', this)">
+            <div class="frame-opt" id="fopt-royal" onclick="window.selectFrameOption('royal')">
               <div class="frame-circle royal"></div>
-              <span>Royal</span>
+              <span>Royal 🔒</span>
             </div>
-            <div class="frame-opt" onclick="selectFrame('sparkle', this)">
+            <div class="frame-opt" id="fopt-sparkle" onclick="window.selectFrameOption('sparkle')">
               <div class="frame-circle sparkle"></div>
-              <span>Sparkle</span>
+              <span>Sparkle 🔒</span>
+            </div>
+            <div class="frame-opt" id="fopt-flower" onclick="window.selectFrameOption('flower')">
+              <div class="frame-circle flower"></div>
+              <span>Anh Đào 🔒</span>
+            </div>
+            <div class="frame-opt" id="fopt-galaxy" onclick="window.selectFrameOption('galaxy')">
+              <div class="frame-circle galaxy"></div>
+              <span>Tinh Hà 🔒</span>
             </div>
           </div>
+
 
           <!-- Name -->
           <label class="edit-modal-label">Tên hiển thị</label>
@@ -840,6 +968,71 @@
         <button id="tourNextBtn" onclick="nextTourStep()" style="background:linear-gradient(135deg,#b583f5,#7bc8f6);color:white;border:none;border-radius:12px;padding:8px 20px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">Tiếp →</button>
       </div>
       <div id="tourDots" style="display:flex;justify-content:center;gap:6px;margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: PIN Setup Sheet -->
+  <div class="modal-overlay" id="pinSetupModal" onclick="if(event.target===this) closeModal('pinSetupModal')">
+    <div class="modal-sheet" style="padding-bottom: 24px;">
+      <div class="sheet-handle"></div>
+      <h3 class="modal-title">🔑 Thiết lập Mã PIN</h3>
+      <p class="modal-sub" id="pinSetupSub" style="margin-bottom: 12px;">Nhập 4 chữ số để bảo vệ nhật ký của bạn</p>
+      
+      <div class="pin-display" id="setupPinDisplay">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+      
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pressSetupKey('1')">1</button>
+        <button class="pin-key" onclick="pressSetupKey('2')">2</button>
+        <button class="pin-key" onclick="pressSetupKey('3')">3</button>
+        <button class="pin-key" onclick="pressSetupKey('4')">4</button>
+        <button class="pin-key" onclick="pressSetupKey('5')">5</button>
+        <button class="pin-key" onclick="pressSetupKey('6')">6</button>
+        <button class="pin-key" onclick="pressSetupKey('7')">7</button>
+        <button class="pin-key" onclick="pressSetupKey('8')">8</button>
+        <button class="pin-key" onclick="pressSetupKey('9')">9</button>
+        <button class="pin-key empty"></button>
+        <button class="pin-key" onclick="pressSetupKey('0')">0</button>
+        <button class="pin-key del" onclick="pressSetupKey('back')">⌫</button>
+      </div>
+      <button class="close-btn" onclick="closeModal('pinSetupModal')" style="margin-top:20px; width: 100%;">Hủy</button>
+    </div>
+  </div>
+
+  <!-- Fullscreen PIN/FaceID Lock Screen Overlay -->
+  <div id="pinLockOverlay" class="pin-lock-overlay" style="display: none;">
+    <div class="pin-lock-content" id="pinLockContent">
+      <div class="lock-avatar-wrapper">
+        <div class="lock-avatar">🐰</div>
+      </div>
+      <h2 class="lock-title">Mochi Mood</h2>
+      <p class="lock-subtitle" id="pinLockMessage">Nhập mã PIN để mở khóa 🔑</p>
+      
+      <div class="pin-display unlock" id="unlockPinDisplay">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+      
+      <div class="pin-keypad unlock">
+        <button class="pin-key" onclick="pressUnlockKey('1')">1</button>
+        <button class="pin-key" onclick="pressUnlockKey('2')">2</button>
+        <button class="pin-key" onclick="pressUnlockKey('3')">3</button>
+        <button class="pin-key" onclick="pressUnlockKey('4')">4</button>
+        <button class="pin-key" onclick="pressUnlockKey('5')">5</button>
+        <button class="pin-key" onclick="pressUnlockKey('6')">6</button>
+        <button class="pin-key" onclick="pressUnlockKey('7')">7</button>
+        <button class="pin-key" onclick="pressUnlockKey('8')">8</button>
+        <button class="pin-key" onclick="pressUnlockKey('9')">9</button>
+        <button class="pin-key bio" id="pinLockBioBtn" style="visibility: hidden; pointer-events: none;"></button>
+        <button class="pin-key" onclick="pressUnlockKey('0')">0</button>
+        <button class="pin-key del" onclick="pressUnlockKey('back')">⌫</button>
+      </div>
     </div>
   </div>
 

@@ -140,6 +140,11 @@ Mochi Mood hỗ trợ công nghệ PWA đầy đủ, cho phép bạn cài đặt
   2. Bấm vào biểu tượng dấu **3 chấm** ở góc trên bên phải.
   3. Chọn **"Install app"** (Cài đặt ứng dụng) hoặc **"Add to Home Screen"** (Thêm vào màn hình chính).
 
+- **Trên Máy tính (Chrome / Edge / Safari trên macOS):**
+  1. Truy cập vào website Mochi Mood của bạn bằng trình duyệt.
+  2. Tìm và bấm vào biểu tượng **Cài đặt** (Install) hình màn hình máy tính nhỏ 🖥️ ở thanh địa chỉ (góc phải trên cùng).
+  3. Chọn **"Cài đặt"** (Install) để lưu và khởi chạy Mochi Mood như một ứng dụng độc lập trên PC/Mac.
+
 ---
 
 ## 📈 6. Lịch sử cập nhật (Changelog)

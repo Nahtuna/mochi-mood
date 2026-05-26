@@ -161,7 +161,8 @@ export async function signOut() {
   await supabaseClient.auth.signOut();
   const MOCHI_LS_KEYS = [
     'mochi_user_id', 'mochi_profile', 'mochi_wallpaper_enabled',
-    'mochi_language', 'mochi_mood_set', 'mochi_reminder_time', 'mochi_security_enabled'
+    'mochi_language', 'mochi_mood_set', 'mochi_reminder_time', 'mochi_security_enabled',
+    'mochi_security_type', 'mochi_security_pin'
   ];
   MOCHI_LS_KEYS.forEach(key => localStorage.removeItem(key));
   logger.info('Đã đăng xuất và xóa dữ liệu local.');

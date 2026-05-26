@@ -2,6 +2,7 @@ import { AVATAR_EMOJIS } from '../config.js';
 import { state } from '../state.js';
 import { showToast, formatDate, calcStreak } from '../utils.js';
 import { saveProfileToDB, uploadFileToStorage } from '../api.js';
+import { openPinSetup } from './security.js';
 
 export function loadProfile() {
   try {
@@ -34,6 +35,10 @@ export function updateProfileUI() {
   const avWrap = document.querySelector('.avatar-wrapper');
   if (avWrap) {
     avWrap.className = 'avatar-wrapper ' + (state.profile.avatarFrame || 'none');
+  }
+  const previewFrame = document.getElementById('previewFrame');
+  if (previewFrame) {
+    previewFrame.className = 'premium-frame ' + (state.profile.avatarFrame || 'none');
   }
   const avEl = document.getElementById('profileAvatar');
   if (avEl) {
@@ -88,9 +93,52 @@ export function updateSettingsUI() {
   const secVal = document.getElementById('securityValue');
   if (secVal) {
     const type = state.settings.securityType || 'none';
-    secVal.textContent = type === 'none' ? 'Tắt' : type.toUpperCase();
+    secVal.textContent = type === 'none' ? 'Tắt' : 'Mã PIN';
   }
+
+  // Update Dews visual
+  const meBadge = document.getElementById('meDewsCount');
+  const shopBadge = document.getElementById('shopDewsCount');
+  if (meBadge) meBadge.textContent = state.dews;
+  if (shopBadge) shopBadge.textContent = state.dews;
+
+  // Update locks in avatar frame picker
+  const unlocked = state.unlockedFrames || ['none', 'classic'];
+  const allOptIds = ['none', 'classic', 'royal', 'sparkle', 'flower', 'galaxy'];
+  allOptIds.forEach(id => {
+    const el = document.getElementById(`fopt-${id}`);
+    if (el) {
+      el.classList.remove('active');
+      if (state.profile.avatarFrame === id) {
+        el.classList.add('active');
+      }
+      
+      const isUnlocked = unlocked.includes(id) || id === 'none' || id === 'classic';
+      const label = el.querySelector('span');
+      if (label) {
+        const baseName = id === 'none' ? 'Trống' :
+                         id === 'classic' ? 'Classic' :
+                         id === 'royal' ? 'Royal' :
+                         id === 'sparkle' ? 'Sparkle' :
+                         id === 'flower' ? 'Anh Đào' : 'Tinh Hà';
+        label.textContent = isUnlocked ? baseName : `${baseName} 🔒`;
+      }
+    }
+  });
 }
+
+export function selectFrameOption(id) {
+  const unlocked = state.unlockedFrames || ['none', 'classic'];
+  if (!unlocked.includes(id) && id !== 'none' && id !== 'classic') {
+    showToast('🔒 Khung này đang bị khóa! Hãy ghé Tiệm tạp hóa Mochi đổi hạt sương để mở khóa nhé 💧');
+    return;
+  }
+  
+  state.profile.avatarFrame = id;
+  updateProfileUI();
+  updateSettingsUI();
+}
+
 
 export function toggleWallpaper() {
   const isEnabled = document.getElementById('wallpaperToggle')?.checked;
@@ -228,26 +276,24 @@ export function closeAvatarEdit(event) {
   }
 }
 
-export function selectFrame(frameClass, el) {
-  state.profile.avatarFrame = frameClass;
-  const preview = document.getElementById('previewFrame');
-  if (preview) {
-    preview.className = 'premium-frame ' + frameClass;
-  }
-  document.querySelectorAll('.frame-opt').forEach(opt => opt.classList.remove('active'));
-  if (el) el.classList.add('active');
-}
+
 
 export function showSecurityModal() { 
   document.getElementById('securityModal')?.classList.add('open'); 
 }
 
 export function selectSecurityOption(option) {
-  state.settings.securityEnabled = (option !== 'none');
-  state.settings.securityType = option;
-  updateSettingsUI();
-  document.getElementById('securityModal')?.classList.remove('open');
-  showToast(`🔒 Đã thiết lập bảo mật: ${option.toUpperCase()}`);
+  if (option === 'none') {
+    state.settings.securityEnabled = false;
+    state.settings.securityType = 'none';
+    state.settings.securityPin = '';
+    updateSettingsUI();
+    document.getElementById('securityModal')?.classList.remove('open');
+    showToast('🔒 Đã tắt bảo mật ứng dụng.');
+  } else {
+    openPinSetup(option);
+    document.getElementById('securityModal')?.classList.remove('open');
+  }
 }
 export function showNotifModal() { 
   const modal = document.getElementById('notifModal');
