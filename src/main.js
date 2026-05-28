@@ -29,7 +29,8 @@ import {
 } from './modules/entry.js';
 import { 
   showCameraSource, openAlbum, retakePhoto, openLiveCamera, flipCamera, 
-  takePhoto, addMorePhoto, doneMultiPhoto, usePhoto, closeCameraModal, useAlbumPhotos 
+  takePhoto, addMorePhoto, doneMultiPhoto, usePhoto, closeCameraModal, useAlbumPhotos,
+  setCameraFilter, togglePolaroidFrame
 } from './modules/camera.js';
 import { openPhotoGallery, openLightbox, closeLightbox } from './modules/gallery.js';
 import { startTour, nextTourStep, skipTour } from './modules/onboarding.js';
@@ -101,6 +102,8 @@ window.doneMultiPhoto = doneMultiPhoto;
 window.usePhoto = usePhoto;
 window.closeCameraModal = closeCameraModal;
 window.useAlbumPhotos = useAlbumPhotos;
+window.setCameraFilter = setCameraFilter;
+window.togglePolaroidFrame = togglePolaroidFrame;
 
 window.changeMonth = changeMonth;
 window.statsScrollTo = statsScrollTo;

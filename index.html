@@ -445,9 +445,18 @@
               <div class="camera-corner tl"></div>
               <div class="camera-corner tr"></div>
               <div class="camera-corner bl"></div>
-              <div class="camera-corner br"></div>
             </div>
           </div>
+
+          <!-- Retro Filters & Frame Selection -->
+          <div class="camera-filters-bar" id="cameraFiltersBar">
+            <button class="filter-opt-btn active" onclick="setCameraFilter('none', this)">🎨 Gốc</button>
+            <button class="filter-opt-btn" onclick="setCameraFilter('polaroid', this)">🎞️ Vintage</button>
+            <button class="filter-opt-btn" onclick="setCameraFilter('pink', this)">🌸 Mochi</button>
+            <button class="filter-opt-btn" onclick="setCameraFilter('forest', this)">🌲 Forest</button>
+            <button class="frame-toggle-btn" id="polaroidFrameToggle" onclick="togglePolaroidFrame()">🖼️ Khung: Tắt</button>
+          </div>
+
           <div class="camera-controls">
             <button class="cam-ctrl-btn" onclick="flipCamera()" title="Đổi camera" id="flipBtn">🔀</button>
             <button class="cam-shutter-btn" onclick="takePhoto()" id="shutterBtn">

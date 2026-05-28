@@ -5,6 +5,77 @@ let cameraFacing = 'user';
 let capturedDataUrl = null;
 let pendingPhotos = [];
 let camSessionPhotos = [];
+let selectedFilter = 'none';
+let usePolaroidFrame = false;
+
+// Expose these helpers
+export function setCameraFilter(filterName, btn) {
+  selectedFilter = filterName;
+  const video = document.getElementById('cameraVideo');
+  if (video) {
+    if (filterName === 'none') {
+      video.style.filter = '';
+    } else if (filterName === 'polaroid') {
+      video.style.filter = 'sepia(0.24) contrast(1.15) saturate(0.85) brightness(0.96)';
+    } else if (filterName === 'pink') {
+      video.style.filter = 'hue-rotate(-12deg) saturate(1.15) brightness(1.04) contrast(0.96)';
+    } else if (filterName === 'forest') {
+      video.style.filter = 'contrast(0.92) saturate(0.72) sepia(0.12) hue-rotate(12deg)';
+    }
+  }
+  
+  // Cập nhật trạng thái active của các nút filter
+  document.querySelectorAll('.filter-opt-btn').forEach(b => b.classList.remove('active'));
+  if (btn) {
+    btn.classList.add('active');
+  } else {
+    // Tìm và active nút tương ứng
+    const foundBtn = Array.from(document.querySelectorAll('.filter-opt-btn')).find(b => b.getAttribute('onclick')?.includes(`'${filterName}'`));
+    if (foundBtn) foundBtn.classList.add('active');
+  }
+  
+  if ('vibrate' in navigator) navigator.vibrate(10);
+}
+
+export function togglePolaroidFrame() {
+  usePolaroidFrame = !usePolaroidFrame;
+  const btn = document.getElementById('polaroidFrameToggle');
+  if (btn) {
+    btn.textContent = usePolaroidFrame ? '🖼️ Khung: Bật' : '🖼️ Khung: Tắt';
+    btn.classList.toggle('active', usePolaroidFrame);
+  }
+  
+  // Hiển thị khung giả lập trong phần live preview
+  const overlay = document.querySelector('.camera-frame-overlay');
+  if (overlay) {
+    overlay.classList.toggle('polaroid-frame-preview', usePolaroidFrame);
+  }
+  
+  if ('vibrate' in navigator) navigator.vibrate(10);
+}
+
+export function playShutterSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.12);
+    
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.13);
+  } catch (e) {
+    console.log('Web Audio shutter sound failed:', e);
+  }
+}
 
 export function showCameraSource() {
   document.getElementById('cameraSourceModal')?.classList.add('open');
@@ -42,6 +113,9 @@ export async function startCameraStream() {
       video.srcObject = cameraStream;
       video.classList.toggle('mirrored', cameraFacing === 'user');
       video.style.display = 'block';
+      
+      // Áp dụng lại bộ lọc màu đang chọn
+      setCameraFilter(selectedFilter, null);
     }
     const previewRow = document.getElementById('photoPreviewRow');
     if (previewRow) previewRow.style.display = 'none';
@@ -60,6 +134,7 @@ export async function flipCamera() {
     btn.style.transform = 'rotateY(180deg)';
     setTimeout(() => btn.style.transform = '', 400);
   }
+  if ('vibrate' in navigator) navigator.vibrate(15);
   await startCameraStream();
 }
 
@@ -68,15 +143,78 @@ export function takePhoto() {
   const canvas = document.getElementById('cameraCanvas');
   if (!video || !canvas) return;
   
+  // 1. Phát âm thanh màn trập & Rung phản hồi
+  playShutterSound();
+  if ('vibrate' in navigator) navigator.vibrate([15, 30, 15]);
+
+  // 2. Thiết lập kích thước
   canvas.width = video.videoWidth || 640;
   canvas.height = video.videoHeight || 480;
   const ctx = canvas.getContext('2d');
+  
+  // 3. Xử lý gương nếu là camera trước
   if (cameraFacing === 'user') {
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
   }
+  
+  // 4. Áp dụng hiệu ứng bộ lọc màu lên Canvas
+  let filterString = 'none';
+  if (selectedFilter === 'polaroid') {
+    filterString = 'sepia(0.24) contrast(1.15) saturate(0.85) brightness(0.96)';
+  } else if (selectedFilter === 'pink') {
+    filterString = 'hue-rotate(-12deg) saturate(1.15) brightness(1.04) contrast(0.96)';
+  } else if (selectedFilter === 'forest') {
+    filterString = 'contrast(0.92) saturate(0.72) sepia(0.12) hue-rotate(12deg)';
+  }
+  ctx.filter = filterString;
+  
+  // 5. Vẽ ảnh gốc từ stream video
   ctx.drawImage(video, 0, 0);
-  capturedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+  
+  // 6. Lồng khung ảnh Polaroid dễ thương nếu được bật
+  if (usePolaroidFrame) {
+    const frameCanvas = document.createElement('canvas');
+    const fCtx = frameCanvas.getContext('2d');
+    
+    const borderWidth = Math.round(canvas.width * 0.05); // 5% border
+    const borderTop = borderWidth;
+    const borderBottom = Math.round(canvas.width * 0.16); // Thicker bottom (16%)
+    
+    frameCanvas.width = canvas.width + borderWidth * 2;
+    frameCanvas.height = canvas.height + borderTop + borderBottom;
+    
+    // Tô nền trắng cho khung
+    fCtx.fillStyle = '#ffffff';
+    fCtx.fillRect(0, 0, frameCanvas.width, frameCanvas.height);
+    
+    // Vẽ viền mịn mờ bên ngoài khung
+    fCtx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+    fCtx.lineWidth = 1;
+    fCtx.strokeRect(0, 0, frameCanvas.width, frameCanvas.height);
+    
+    // Vẽ bức ảnh đã có filter vào giữa khung
+    fCtx.drawImage(canvas, borderWidth, borderTop);
+    
+    // Vẽ viền mịn bên trong bức ảnh để tạo độ chân thật sâu sắc
+    fCtx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
+    fCtx.lineWidth = 1.5;
+    fCtx.strokeRect(borderWidth, borderTop, canvas.width, canvas.height);
+    
+    // Cập nhật lại canvas chính
+    canvas.width = frameCanvas.width;
+    canvas.height = frameCanvas.height;
+    const mainCtx = canvas.getContext('2d');
+    mainCtx.filter = 'none'; // reset filter
+    mainCtx.drawImage(frameCanvas, 0, 0);
+  }
+  
+  // 7. Tối ưu hóa & nén ảnh phía Client sang WebP chất lượng cao (0.80)
+  capturedDataUrl = canvas.toDataURL('image/webp', 0.80);
+  if (!capturedDataUrl.startsWith('data:image/webp')) {
+    // Trình duyệt không hỗ trợ WebP, dùng JPEG (0.82) làm fallback
+    capturedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+  }
 
   const preview = document.getElementById('capturedPreview');
   if (preview) {
